@@ -16,5 +16,9 @@ WORKDIR /app
 COPY --from=builder /install /usr/local
 COPY --from=builder /build /app
 
+# remove build/packaging tools from runtime
+RUN python -m pip uninstall -y pip setuptools wheel || true \
+ && rm -rf /root/.cache /tmp/* \
+
 EXPOSE 8000
 CMD ["uvicorn","main:app","--host","0.0.0.0","--port","8000"]
