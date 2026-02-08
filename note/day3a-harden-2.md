@@ -16,3 +16,10 @@ api-hardened   day3a     7011c860666c   38 minutes ago   158MB
 - python package - CRITICAL 0 : HIGH 1  : fixed version there (starlette)
 
 the removing build/package tooling reduced 3 CVEs
+
+
+## further attempt
+fastapi==0.125 in requirements.txt
+
+This worked and python CVEs are gone.
+
