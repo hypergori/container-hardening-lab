@@ -1,0 +1,30 @@
+# -------- build stage --------
+FROM python:3.11-slim AS builder
+WORKDIR /build
+
+COPY app/requirements.txt .
+RUN pip wheel --no-cache-dir --wheel-dir /wheels -r requirements.txt
+
+RUN pip install --no-cache-dir --no-index --find-links=/wheels --target /opt/python-deps -r requirements.txt
+
+# sanity check: import from the target dir
+RUN PYTHONPATH=/opt/python-deps python -c "import uvicorn; print('uvicorn builder ok:', uvicorn.__version__)"
+
+
+COPY app/ /app
+
+# -------- runtime stage --------
+FROM al3xos/python-distroless:3.13-debian12
+WORKDIR /app
+
+
+
+COPY --from=builder /opt/python-deps /opt/python-deps
+COPY --from=builder /app /app
+
+# Make deps importable even if 'site' is not processed
+ENV PYTHONPATH=/opt/python-deps
+
+EXPOSE 8000
+
+CMD ["-m","uvicorn","main:app","--host","0.0.0.0","--port","8000"]
