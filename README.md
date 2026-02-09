@@ -36,7 +36,7 @@ docker run --rm -p 8000:8000 --read-only --tmpfs /tmp api-distroless:day5
 ```
 
 ## 5. debian distro-less image
-use community version of distroless debian-python image
+Now use community version of distroless debian-python image, there is only UNFIXED CVE remained Finally! 
 
 Debian package - CRITICAL:0 : HIGH 1  No fixed version (glibc)  
 python package - CRITICAL:0 : HIGH 0
@@ -45,9 +45,6 @@ python package - CRITICAL:0 : HIGH 0
 
 Total: 1 (HIGH: 1, CRITICAL: 0)
 
-┌─────────┬───────────────┬──────────┬──────────┬───────────────────┬───────────────┬──────────────────────────────────────────────────────────────┐  
-│ Library │ Vulnerability │ Severity │  Status  │ Installed Version │ Fixed Version │                            Title                             │  
-├─────────┼───────────────┼──────────┼──────────┼───────────────────┼───────────────┼──────────────────────────────────────────────────────────────┤  
-│ libc6   │ CVE-2026-0861 │ HIGH     │ affected │ 2.36-9+deb12u13   │               │ glibc: Integer overflow in memalign leads to heap corruption │  
-│         │               │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2026-0861                    │  
-└─────────┴───────────────┴──────────┴──────────┴───────────────────┴───────────────┴──────────────────────────────────────────────────────────────┘  
+
+![final_scan_vul.png](images/final_scan_vul.png)
+
