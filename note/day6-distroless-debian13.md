@@ -1,28 +1,29 @@
 ## create distroless image
-add user creation, file permission and USER instruction
-
-## docker image size
-- Final image size : 86.4MB  
-```
-ubuntu@Masashi-SER5:~$   docker images api-distroless:day5
-REPOSITORY       TAG       IMAGE ID       CREATED              SIZE
-api-distroless   day5      00dad7b67c33   About a minute ago   89.1MB
-```
-
-## final reports
-
-api-distroless:day5 89.1MB  nonroot by default  HIGH:13  CRITICAL:6
-Much smaller image; OS CVEs come from bundled Debian12+Python runtime libs; Python deps had 0 findings
+ 
+## Docker file
+Dockerfile.debian13
 
 
-## switching community edition of python-debian distroless image
-The result ended with 1 CRITICAL vulnerability
+## trivy report summary
+api-debian13:day6 (debian 13.3)
+
+Total: 1 (HIGH: 1, CRITICAL: 0)
 
 ┌─────────┬───────────────┬──────────┬──────────┬───────────────────┬───────────────┬──────────────────────────────────────────────────────────────┐
 │ Library │ Vulnerability │ Severity │  Status  │ Installed Version │ Fixed Version │                            Title                             │
 ├─────────┼───────────────┼──────────┼──────────┼───────────────────┼───────────────┼──────────────────────────────────────────────────────────────┤
-│ libc6   │ CVE-2026-0861 │ HIGH     │ affected │ 2.36-9+deb12u13   │               │ glibc: Integer overflow in memalign leads to heap corruption │
+│ libc6   │ CVE-2026-0861 │ HIGH     │ affected │ 2.41-12+deb13u1   │               │ glibc: Integer overflow in memalign leads to heap corruption │
 │         │               │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2026-0861                    │
 └─────────┴───────────────┴──────────┴──────────┴───────────────────┴───────────────┴──────────────────────────────────────────────────────────────┘
 
+Python (python-pkg)
 
+Total: 1 (HIGH: 1, CRITICAL: 0)
+
+┌──────────────────┬────────────────┬──────────┬────────┬───────────────────┬───────────────┬──────────────────────────────────────────────────────┐
+│     Library      │ Vulnerability  │ Severity │ Status │ Installed Version │ Fixed Version │                        Title                         │
+├──────────────────┼────────────────┼──────────┼────────┼───────────────────┼───────────────┼──────────────────────────────────────────────────────┤
+│ wheel (METADATA) │ CVE-2026-24049 │ HIGH     │ fixed  │ 0.46.1            │ 0.46.2        │ wheel: wheel: Privilege Escalation or Arbitrary Code │
+│                  │                │          │        │                   │               │ Execution via malicious wheel file...                │
+│                  │                │          │        │                   │               │ https://avd.aquasec.com/nvd/cve-2026-24049           │
+└──────────────────┴────────────────┴──────────┴────────┴───────────────────┴───────────────┴──────────────────────────────────────────────────────┘

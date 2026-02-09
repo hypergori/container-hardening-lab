@@ -1,24 +1,40 @@
-## create distroless image
-add user creation, file permission and USER instruction
+## 1. Create first docker image with app
+Just using python:3.10-slim as base image and build fastAPI hello-world app
 
-## docker image size
-- Final image size : 86.4MB  
-```
-ubuntu@Masashi-SER5:~$   docker images api-distroless:day5
-REPOSITORY       TAG       IMAGE ID       CREATED              SIZE
-api-distroless   day5      00dad7b67c33   About a minute ago   89.1MB
-```
+## 2. Scan CVEs by trivy
+scan by trivy 
+Result is size 162MB, run as root
+debian layer is largest then python packages and python runtime layer
 
-## final reports
+debian package - CRITICAL:0 , HIGH 2
+python package - CRITICAL:0 , HIGH 4
 
-api-distroless:day5 89.1MB  nonroot by default  HIGH:13  CRITICAL:6
-Much smaller image; OS CVEs come from bundled Debian12+Python runtime libs; Python deps had 0 findings
+## 3. Separate builder and runtime stage, then remove build tool
+This succeded to remove 3 HIGH CVEs from python side
 
+Debian package - CRITICAL:0 : HIGH 2  No fixed version (glibc)
+python package - CRITICAL:0 : HIGH 1  fixed version there (starlette)
 
-## switching community edition of python-debian distroless image
-FROM al3xos/python-distroless:3.13-debian12
+## 3a. upgrade the fastAPI
+fastapi==0.125
 
-The result ended with 1 CRITICAL vulnerability
+Debian package - CRITICAL:0 : HIGH 2  No fixed version (glibc)
+python package - CRITICAL:0 : HIGH 0  
+
+## 4. run as non-root and readonly mode
+create non-root appuser  in runtime stage and confirm by whoami
+
+## 5. debian distro-less image
+use community version of distroless debian-python image
+
+Debian package - CRITICAL:0 : HIGH 1  No fixed version (glibc)
+python package - CRITICAL:0 : HIGH 0
+
+[Dockerfile.distroless](Dockerfile.distroless)
+
+api-hardened:day5 (debian 12.13)
+================================
+Total: 1 (HIGH: 1, CRITICAL: 0)
 
 ┌─────────┬───────────────┬──────────┬──────────┬───────────────────┬───────────────┬──────────────────────────────────────────────────────────────┐
 │ Library │ Vulnerability │ Severity │  Status  │ Installed Version │ Fixed Version │                            Title                             │
@@ -26,5 +42,3 @@ The result ended with 1 CRITICAL vulnerability
 │ libc6   │ CVE-2026-0861 │ HIGH     │ affected │ 2.36-9+deb12u13   │               │ glibc: Integer overflow in memalign leads to heap corruption │
 │         │               │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2026-0861                    │
 └─────────┴───────────────┴──────────┴──────────┴───────────────────┴───────────────┴──────────────────────────────────────────────────────────────┘
-
-

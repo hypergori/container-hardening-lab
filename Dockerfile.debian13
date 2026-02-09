@@ -1,30 +1,44 @@
 # -------- build stage --------
-FROM python:3.11-slim AS builder
+FROM debian:trixie-slim AS builder
 WORKDIR /build
 
+# Install Python runtime + pip on Debian 13 (default Python is 3.13)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 \
+    python3-venv \
+    python3-pip \
+    ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
+
+
+# Install Python deps into a relocatable dir
 COPY app/requirements.txt .
-RUN pip wheel --no-cache-dir --wheel-dir /wheels -r requirements.txt
+RUN python3 -m pip install --no-cache-dir --target /opt/python-deps -r requirements.txt
 
-RUN pip install --no-cache-dir --no-index --find-links=/wheels --target /opt/python-deps -r requirements.txt
-
-# sanity check: import from the target dir
-RUN PYTHONPATH=/opt/python-deps python -c "import uvicorn; print('uvicorn builder ok:', uvicorn.__version__)"
-
-
+# Copy app code
 COPY app/ /app
 
-# -------- runtime stage --------
-FROM al3xos/python-distroless:3.13-debian12
+# Sanity check in builder
+RUN PYTHONPATH=/opt/python-deps python3 -c "import uvicorn; print('uvicorn ok')"
+
+# -------- runtime (Distroless Debian 13 base) --------
+FROM gcr.io/distroless/cc-debian13
 WORKDIR /app
 
+# Copy python runtime from builder
+# (Debian packages place python in /usr/bin and stdlib under /usr/lib)
+COPY --from=builder /usr/bin/python3 /usr/bin/python3
+COPY --from=builder /usr/lib/ /usr/lib/
 
+# Copy CA certs (HTTPS clients etc.)
+COPY --from=builder /etc/ssl/certs/ /etc/ssl/certs/
 
-COPY --from=builder /opt/python-deps /opt/python-deps
+# Copy your deps + app
+COPY --from=builder /opt/python-deps/ /opt/python-deps/
 COPY --from=builder /app /app
 
-# Make deps importable even if 'site' is not processed
+# Make deps importable
 ENV PYTHONPATH=/opt/python-deps
 
 EXPOSE 8000
-
-CMD ["-m","uvicorn","main:app","--host","0.0.0.0","--port","8000"]
+CMD ["/usr/bin/python3","-m","uvicorn","main:app","--host","0.0.0.0","--port","8000"]

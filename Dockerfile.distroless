@@ -1,38 +1,28 @@
 # -------- build stage --------
-FROM python:3.10-slim AS builder
-
+FROM python:3.11-slim AS builder
 WORKDIR /build
 
 COPY app/requirements.txt .
-RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
+RUN pip wheel --no-cache-dir --wheel-dir /wheels -r requirements.txt
 
-COPY app/ .
+RUN pip install --no-cache-dir --no-index --find-links=/wheels --target /opt/python-deps -r requirements.txt
+
+# sanity check: import from the target dir
+RUN PYTHONPATH=/opt/python-deps python -c "import uvicorn; print('uvicorn builder ok:', uvicorn.__version__)"
+
+
+COPY app/ /app
 
 # -------- runtime stage --------
-FROM python:3.10-slim
-
-
-# Create non-root user
-RUN useradd --create-home --shell /usr/sbin/nologin --uid 10001 appuser
-
+FROM al3xos/python-distroless:3.13-debian12
 WORKDIR /app
 
-COPY --from=builder /install /usr/local
-COPY --from=builder /build /app
+COPY --from=builder /opt/python-deps /opt/python-deps
+COPY --from=builder /app /app
 
-
-RUN mkdir -p /tmp /app/.cache && chown -R appuser:appuser /app /tmp
-
-
-HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
-  CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/hello').read()" ||exit 1
-
-# remove build/packaging tools from runtime
-RUN python -m pip uninstall -y pip setuptools wheel || true \
- && rm -rf /root/.cache /tmp/*
-
-USER 10001
-
+# Make deps importable even if 'site' is not processed
+ENV PYTHONPATH=/opt/python-deps
 
 EXPOSE 8000
-CMD ["uvicorn","main:app","--host","0.0.0.0","--port","8000"]
+
+CMD ["-m","uvicorn","main:app","--host","0.0.0.0","--port","8000"]
